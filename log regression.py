@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import LogisticRegression
 from matplotlib import pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from mlxtend.feature_selection import SequentialFeatureSelector
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score as acc
+from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from sklearn import metrics
 
 print("whatever")
@@ -43,9 +45,11 @@ headers = list(onehotdata)
 # logistic regression function
 def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     # split X and y into training and testing sets
-    from sklearn.model_selection import train_test_split
+    
 
     X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
+    y_train = y_train.ravel()
+    y_test = y_test.ravel()
 
     # instantiate the model (using the default parameters)
     logreg = LogisticRegression(solver = 'lbfgs', random_state=16, max_iter = 2500)
@@ -70,15 +74,25 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     plt.ylabel('True Positive Rate')
     plt.show()
 
+def clf(X_train, y_train):
+    clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
+    sfs1 = sfs(clf, k_features=25, forward=True, floating=False, verbose=2, scoring='accuracy', cv=5)
+    #selected_features = sfs.fit(pro_change, mhhsy)
+    sfs1 = sfs1.fit(X_train, y_train)
+    feat_cols = list(sfs1.k_feature_idx_)
+    print(feat_cols)
+    return feat_cols
+
 pro_change = onehotdata.drop(['1y mHHS','dmHHS', '1y NAHS', 'dNAHS', '1y HOS-SSS','1y VAS','dVAS','dHOS','PRO change'], axis=1)
 #mHHS
+X_train, X_test, y_train, y_test = train_test_split(pro_change, onehotdata['dmHHS'], test_size=0.25, random_state=16)
+y_train = y_train.ravel()
+y_test = y_test.ravel()
 
 #x = onehotdata[list(mhhsx)]
-mhhsy = onehotdata[['dmHHS']]
-sfs = SequentialFeatureSelector(LogisticRegression(), k_features=25, forward=True, scoring='accuracy',cv=None)
-selected_features = sfs.fit(pro_change, mhhsy)
-#logregreg(selected_features, mhhsy, "mHHS")
+#mhhsy = onehotdata[['dmHHS']]
 
+clf(X_train, y_train)
 
 
 """
