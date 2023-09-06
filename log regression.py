@@ -2,12 +2,17 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score as acc
-from mlxtend.feature_selection import SequentialFeatureSelector as sfs
+import time
+import statsmodels.api as sm
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import RidgeCV, LassoCV, Ridge, Lasso
+
+#from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from sklearn import metrics
 
+start = time.time()
 print("whatever")
 pd.set_option('display.max_columns', 60)
 #pd.set_option('display.max_rows', 150)
@@ -15,33 +20,46 @@ pd.set_option('display.max_columns', 60)
 
 #read in xlsx file
 data = pd.read_csv('datatrimmed2.csv')
-print("input df", data.head())
+#print("input df", data.head())
 
 #drop nulls 
 data = data.dropna()
-print(data.shape)
+#print(data.shape)
 
-
+#todo
+#clean up splitting data in logregreg function
 
 #create dummy variables
 onehotdata = pd.get_dummies(data, columns = ['Gait', 'Tonnis Grade (Pre-op)', 'Tonnis Grade (Post-op)'], drop_first = True)
 #print(onehotdata.head)
 headers = list(onehotdata)
-print(headers)
+#print(headers)
 pro_change = onehotdata.drop(['1y mHHS','dmHHS', '1y NAHS', 'dNAHS', '1y HOS-SSS','1y VAS','dVAS','dHOS','PRO change'], axis=1)
+headers_keep = ['Age at Sx', 'Sex', 'BMI', 'MRI Generalized chondral damage', 'MRI Localized chondral defect (not degenerative)', 'MRI Subchondral cyst - Femur central compartment', 'MRI Subchondral cyst - Femur peripheral compartment', 'MRI Subchondral cyst - Acetabulum central compartment', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)','Ischial Spine (Post-op)', 'Crossover (Post-op)', 'Lateral CEA  (Post-op)', 'Joint Space - Medial (Post-op)', 'Joint Space - Central (Post-op)', 'Joint Space - Lateral (Post-op)', 'Coxa Profunda (Post-op)', 'Anterior CEA (Post-op)', 'Alpha Angle (Post-op)', 'Tonnis Grade (Pre-op)_1', 'Tonnis Grade (Pre-op)_2', 'Tonnis Grade (Post-op)_1', 'Tonnis Grade (Post-op)_2']
+x_pick = pro_change.drop(headers_keep, axis=1)
 
-# find indices of factors we want to keep
-# keep into list
-# extend list of feat cols with indices
+
+#hard code implementation
+x_picked = x_pick.iloc[:, [1, 3, 5]]
+print("list to pick from")
+x_pickheads = list(x_picked)
+print(list(x_picked))
+x_pickheads.extend(headers_keep)
+print(x_pickheads)
+print(onehotdata[x_pickheads])
+
+def splittrain(x_col, y_col):
+    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
+    y_train = y_train.ravel() #create 1D array
+    y_test = y_test.ravel()
+    return X_train, X_test, y_train, y_test
 
 # logistic regression function
 def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     # split X and y into training and testing sets
     
 
-    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
-    y_train = y_train.ravel()
-    y_test = y_test.ravel()
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
 
     # instantiate the model (using the default parameters)
     logreg = LogisticRegression(solver = 'lbfgs', random_state=16, max_iter = 2500)
@@ -66,31 +84,20 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     plt.ylabel('True Positive Rate')
     plt.show()
 
-def clf(X_train, y_train):
-    clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
-    sfs1 = sfs(clf, k_features=40, forward=True, floating=False, verbose=2, scoring='accuracy', cv=5)
-    #selected_features = sfs.fit(pro_change, mhhsy)
-    sfs1 = sfs1.fit(X_train, y_train)
-    feat_cols = list(sfs1.k_feature_idx_)
-    print(feat_cols)
-    return feat_cols
 
-def splittrain(x_col, y_col):
-    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
-    y_train = y_train.ravel() #create 1D array
-    y_test = y_test.ravel()
-    return X_train, X_test, y_train, y_test
 
-#to keep: LCEA preop, ACEA preop, BMI, Sex, Age at Sx, chondral damage
+#def featselect(X_train, X_test, y_train, y_test):
+    #log = 
+
 
 #mHHS
-x_trainm, x_testm, y_trainm, y_testm = splittrain(pro_change, onehotdata['dmHHS'])
-feat_colsmhhs = clf(x_trainm, y_trainm)
+#x_trainm, x_testm, y_trainm, y_testm = splittrain(pro_change, onehotdata['dmHHS'])
+#feat_colsmhhs = clf(x_trainm, y_trainm)
 x_col = pro_change.iloc[:, feat_colsmhhs]
 print(x_col.head())
 logregreg(x_col, onehotdata['dmHHS'], "mHHS")
 
-"""
+
 
 #NAHS
 X_trainN, X_testN, y_trainN, y_testN = train_test_split(pro_change, onehotdata['dNAHS'], test_size=0.25, random_state=16)
@@ -165,3 +172,6 @@ headers = list(onehotdatax)
 
 #gait levels --> 0 = normal, 1 = right antalgic, 2 = right trendelenberg, 3 = left antalgic, 4 = left trendelenberg, 5 = other
 """
+
+end = time.time()
+print("this shit took",(end-start), "s")
