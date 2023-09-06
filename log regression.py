@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score as acc
+
 from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from sklearn import metrics
 
@@ -21,7 +21,8 @@ print("input df", data.head())
 data = data.dropna()
 print(data.shape)
 
-
+#todo
+#clean up splitting data in logregreg
 
 #create dummy variables
 onehotdata = pd.get_dummies(data, columns = ['Gait', 'Tonnis Grade (Pre-op)', 'Tonnis Grade (Post-op)'], drop_first = True)
@@ -32,7 +33,7 @@ pro_change = onehotdata.drop(['1y mHHS','dmHHS', '1y NAHS', 'dNAHS', '1y HOS-SSS
 
 # find indices of factors we want to keep
 # keep into list
-# extend list of feat cols with indices
+# extend list of feat cols with indices?
 
 # logistic regression function
 def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
@@ -66,22 +67,50 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     plt.ylabel('True Positive Rate')
     plt.show()
 
-def clf(X_train, y_train):
-    clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
-    sfs1 = sfs(clf, k_features=40, forward=True, floating=False, verbose=2, scoring='accuracy', cv=5)
-    #selected_features = sfs.fit(pro_change, mhhsy)
-    sfs1 = sfs1.fit(X_train, y_train)
-    feat_cols = list(sfs1.k_feature_idx_)
-    print(feat_cols)
-    return feat_cols
-
 def splittrain(x_col, y_col):
     X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
     y_train = y_train.ravel() #create 1D array
     y_test = y_test.ravel()
     return X_train, X_test, y_train, y_test
 
-#to keep: LCEA preop, ACEA preop, BMI, Sex, Age at Sx, chondral damage
+def featselect(X_train, X_test, y_train, y_test):
+    log = 
+
+#to keep: Age at Sx, Sex, BMI, MRI Generalized chondral damage, MRI Localized chondral defect (not degenerative), MRI Subchondral cyst - Femur central compartment, MRI Subchondral cyst - Femur peripheral compartment	MRI Subchondral cyst - Acetabulum central compartment
+
+# how to keep:
+#   method one
+#       get indices of variables to keep
+        #check new list if it has each index
+        # if it doesnt, extend using that value
+        #index onehotdata using that list
+        #pros
+            #easier to keep data together
+            #clearer implementation
+        #cons
+            #ANNOYING implementation
+            #WAY more code
+
+    #method two
+        #make a new dataframe with variables to keep 
+        #make a new dataframe with variables to pick from
+        #run feature selection on those variables
+        #append dataframes somehow
+        #pros
+        #   easier to figure out
+            #less code
+        #cons
+            #idk how to join
+            #indices on the left can be mixed up using a right join ?
+            #keeping indices solid --> can use inner/outer join?
+    
+    #method 3
+    #make separate dataframe with variables to pick from
+    #get indices that got picked
+    #get headers
+    #extend onto to headers to keep list
+    #index into onehotdata
+    # this makes the most sense here <--
 
 #mHHS
 x_trainm, x_testm, y_trainm, y_testm = splittrain(pro_change, onehotdata['dmHHS'])
