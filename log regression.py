@@ -5,8 +5,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 import time
+import statsmodels.api as sm
 
-from mlxtend.feature_selection import SequentialFeatureSelector as sfs
+#from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from sklearn import metrics
 
 start = time.time()
@@ -24,7 +25,7 @@ data = data.dropna()
 #print(data.shape)
 
 #todo
-#clean up splitting data in logregreg
+#clean up splitting data in logregreg function
 
 #create dummy variables
 onehotdata = pd.get_dummies(data, columns = ['Gait', 'Tonnis Grade (Pre-op)', 'Tonnis Grade (Post-op)'], drop_first = True)
@@ -44,17 +45,19 @@ print(list(x_picked))
 x_pickheads.extend(headers_keep)
 print(x_pickheads)
 print(onehotdata[x_pickheads])
-"""
 
+def splittrain(x_col, y_col):
+    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
+    y_train = y_train.ravel() #create 1D array
+    y_test = y_test.ravel()
+    return X_train, X_test, y_train, y_test
 
 # logistic regression function
 def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     # split X and y into training and testing sets
     
 
-    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
-    y_train = y_train.ravel()
-    y_test = y_test.ravel()
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
 
     # instantiate the model (using the default parameters)
     logreg = LogisticRegression(solver = 'lbfgs', random_state=16, max_iter = 2500)
@@ -79,19 +82,15 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     plt.ylabel('True Positive Rate')
     plt.show()
 
-def splittrain(x_col, y_col):
-    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
-    y_train = y_train.ravel() #create 1D array
-    y_test = y_test.ravel()
-    return X_train, X_test, y_train, y_test
+
 
 #def featselect(X_train, X_test, y_train, y_test):
     #log = 
 
 
 #mHHS
-x_trainm, x_testm, y_trainm, y_testm = splittrain(pro_change, onehotdata['dmHHS'])
-feat_colsmhhs = clf(x_trainm, y_trainm)
+#x_trainm, x_testm, y_trainm, y_testm = splittrain(pro_change, onehotdata['dmHHS'])
+#feat_colsmhhs = clf(x_trainm, y_trainm)
 x_col = pro_change.iloc[:, feat_colsmhhs]
 print(x_col.head())
 logregreg(x_col, onehotdata['dmHHS'], "mHHS")
