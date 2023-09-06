@@ -12,36 +12,23 @@ print("whatever")
 pd.set_option('display.max_columns', 60)
 #pd.set_option('display.max_rows', 150)
 # implementing a logistic regression model using everything else to predict whether there will be a change in PROs.
-# fuck my life
-#
-
-# todo
-# figure out stepwise????
-# set up regression for each variable --> 4 variates, NAHS, mHHS, IHOT, VAS
-# --> set up function for regression
-# --> implement for each
-# debug regression as needed
-
 
 #read in xlsx file
 data = pd.read_csv('datatrimmed2.csv')
-#data.rename({"Unnamed: 0":"ok"}, axis="columns",inplace=True)
-#data.drop(["ok"], axis = 1, inplace=True)
 print("input df", data.head())
 
 #drop nulls 
 data = data.dropna()
 print(data.shape)
 
-#headers = ['WC', 'Age at Sx', 'Sex', 'Age at onset', 'BMI', 'Radiating Pain', 'Back Pain', 'Acute Injury', 'Pre mHHS', '1y mHHS', 'dmHHS', 'Pre NAHS', '1y NAHS', 'dNAHS', 'Pre HOS-SSS', '1y HOS-SSS', 'dHOS', 'Pre VAS', '1y VAS', 'dVAS', '1y Satisfaction', 'MRI Alpha angle value', 'MRI Femoral Version value', 'MRI Ligamentum teres tear', 'MRI AVN', 'MRI Gluteus medius pathology', 'MRI Hamstring tendon pathology', 'MRI Trochanteric Bursitis', 'MRI Generalized chondral damage', 'MRI Localized chondral defect (not degenerative)', 'MRI Subchondral cyst - Femur central compartment', 'MRI Subchondral cyst - Femur peripheral compartment', 'MRI Subchondral cyst - Acetabulum central compartment', 'MRI Perilabral cyst', 'Tonnis Grade (Pre-op)', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Acetabular Inclination (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Neck-Shaft Angle (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)', 'Femoral Offset (Pre-op)', 'Tonnis Grade (Post-op)', 'Ischial Spine (Post-op)',  'Crossover (Post-op)', 'Lateral CEA  (Post-op)', 'Acetabular Inclination (Post-op)', 'Joint Space - Medial (Post-op)', 'Joint Space - Central (Post-op)', 'Joint Space - Lateral (Post-op)', 'Neck-Shaft Angle (Post-op)', 'Coxa Profunda (Post-op)', 'Anterior CEA (Post-op)', 'Alpha Angle (Post-op)', 'Femoral Offset (Post-op)', 'Gait']
 
-#print(len(headers))
 
 #create dummy variables
 onehotdata = pd.get_dummies(data, columns = ['Gait', 'Tonnis Grade (Pre-op)', 'Tonnis Grade (Post-op)'], drop_first = True)
 #print(onehotdata.head)
 headers = list(onehotdata)
 print(headers)
+pro_change = onehotdata.drop(['1y mHHS','dmHHS', '1y NAHS', 'dNAHS', '1y HOS-SSS','1y VAS','dVAS','dHOS','PRO change'], axis=1)
 
 # find indices of factors we want to keep
 # keep into list
@@ -88,24 +75,22 @@ def clf(X_train, y_train):
     print(feat_cols)
     return feat_cols
 
+def splittrain(x_col, y_col):
+    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
+    y_train = y_train.ravel() #create 1D array
+    y_test = y_test.ravel()
+    return X_train, X_test, y_train, y_test
 
+#to keep: LCEA preop, ACEA preop, BMI, Sex, Age at Sx, chondral damage
 
-pro_change = onehotdata.drop(['1y mHHS','dmHHS', '1y NAHS', 'dNAHS', '1y HOS-SSS','1y VAS','dVAS','dHOS','PRO change'], axis=1)
 #mHHS
-X_trainm, X_testm, y_trainm, y_testm = train_test_split(pro_change, onehotdata['dmHHS'], test_size=0.25, random_state=16)
-y_trainm = y_trainm.ravel()
-y_testm = y_testm.ravel()
-#LCEA preop, ACEA preop, BMI, Sex, Age at Sx, chondral damage
-
-#x = onehotdata[list(mhhsx)]
-#mhhsy = onehotdata[['dmHHS']]
-
-feat_colsmhhs = clf(X_trainm, y_trainm)
+x_trainm, x_testm, y_trainm, y_testm = splittrain(pro_change, onehotdata['dmHHS'])
+feat_colsmhhs = clf(x_trainm, y_trainm)
 x_col = pro_change.iloc[:, feat_colsmhhs]
 print(x_col.head())
 logregreg(x_col, onehotdata['dmHHS'], "mHHS")
 
-
+"""
 
 #NAHS
 X_trainN, X_testN, y_trainN, y_testN = train_test_split(pro_change, onehotdata['dNAHS'], test_size=0.25, random_state=16)
@@ -141,7 +126,7 @@ logregreg(x_colv, onehotdata['dVAS'], "VAS")
 
 
 
-"""
+
 
 ##### NOTES #####
 
@@ -171,6 +156,8 @@ print(headermhhsy)
 
 onehotdatax = onehotdata.drop('PRO change', axis=1)
 headers = list(onehotdatax)
+#data.rename({"Unnamed: 0":"ok"}, axis="columns",inplace=True)
+#data.drop(["ok"], axis = 1, inplace=True)
 
 
 # list of full headers below
