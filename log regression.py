@@ -41,6 +41,11 @@ print(data.shape)
 onehotdata = pd.get_dummies(data, columns = ['Gait', 'Tonnis Grade (Pre-op)', 'Tonnis Grade (Post-op)'], drop_first = True)
 #print(onehotdata.head)
 headers = list(onehotdata)
+print(headers)
+
+# find indices of factors we want to keep
+# keep into list
+# extend list of feat cols with indices
 
 # logistic regression function
 def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
@@ -76,41 +81,67 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
 
 def clf(X_train, y_train):
     clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
-    sfs1 = sfs(clf, k_features=25, forward=True, floating=False, verbose=2, scoring='accuracy', cv=5)
+    sfs1 = sfs(clf, k_features=40, forward=True, floating=False, verbose=2, scoring='accuracy', cv=5)
     #selected_features = sfs.fit(pro_change, mhhsy)
     sfs1 = sfs1.fit(X_train, y_train)
     feat_cols = list(sfs1.k_feature_idx_)
     print(feat_cols)
     return feat_cols
 
+
+
 pro_change = onehotdata.drop(['1y mHHS','dmHHS', '1y NAHS', 'dNAHS', '1y HOS-SSS','1y VAS','dVAS','dHOS','PRO change'], axis=1)
 #mHHS
-X_train, X_test, y_train, y_test = train_test_split(pro_change, onehotdata['dmHHS'], test_size=0.25, random_state=16)
-y_train = y_train.ravel()
-y_test = y_test.ravel()
+X_trainm, X_testm, y_trainm, y_testm = train_test_split(pro_change, onehotdata['dmHHS'], test_size=0.25, random_state=16)
+y_trainm = y_trainm.ravel()
+y_testm = y_testm.ravel()
+#LCEA preop, ACEA preop, BMI, Sex, Age at Sx, chondral damage
 
 #x = onehotdata[list(mhhsx)]
 #mhhsy = onehotdata[['dmHHS']]
 
-clf(X_train, y_train)
+feat_colsmhhs = clf(X_trainm, y_trainm)
+x_col = pro_change.iloc[:, feat_colsmhhs]
+print(x_col.head())
+logregreg(x_col, onehotdata['dmHHS'], "mHHS")
+
+
+
+#NAHS
+X_trainN, X_testN, y_trainN, y_testN = train_test_split(pro_change, onehotdata['dNAHS'], test_size=0.25, random_state=16)
+y_trainN = y_trainN.ravel()
+y_testN = y_testN.ravel()
+
+feat_colsnahs = clf(X_trainN, y_trainN)
+x_col = pro_change.iloc[:, feat_colsnahs]
+print(x_col.head())
+logregreg(x_col, onehotdata['dNAHS'], "NAHS")
+
+
+#iHOT
+X_trainH, X_testH, y_trainH, y_testH = train_test_split(pro_change, onehotdata['dHOS'], test_size=0.25, random_state=16)
+y_trainH = y_trainH.ravel()
+y_testH = y_testH.ravel()
+
+feat_colsHOS = clf(X_trainH, y_trainH)
+x_colh = pro_change.iloc[:, feat_colsHOS]
+print(x_colh.head())
+logregreg(x_colh, onehotdata['dHOS'], "HOS")
+
+
+#VAS
+X_trainV, X_testV, y_trainV, y_testV = train_test_split(pro_change, onehotdata['dVAS'], test_size=0.25, random_state=16)
+y_trainV = y_trainV.ravel()
+y_testV = y_testV.ravel()
+
+feat_colsVAS = clf(X_trainV, y_trainV)
+x_colv = pro_change.iloc[:, feat_colsVAS]
+print(x_colv.head())
+logregreg(x_colv, onehotdata['dVAS'], "VAS")
+
 
 
 """
-#NAHS
-nahsy = onehotdata[['dNAHS']]
-logregreg(pro_change, nahsy, "NAHS")
-
-#iHOT
-ihoty = onehotdata[['dHOS']]
-logregreg(pro_change, ihoty, "HOS")
-
-#VAS
-vasy = onehotdata[['dVAS']]
-logregreg(pro_change, vasy, "VAS")
-
-
-
-
 
 ##### NOTES #####
 
