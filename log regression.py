@@ -6,6 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 import time
 import statsmodels.api as sm
+import seaborn as sns
 from sklearn.feature_selection import RFE
 from sklearn.linear_model import RidgeCV, LassoCV, Ridge, Lasso
 
@@ -37,9 +38,18 @@ headers = list(onehotdata)
 pro_change = onehotdata.drop(['1y mHHS','dmHHS', '1y NAHS', 'dNAHS', '1y HOS-SSS','1y VAS','dVAS','dHOS','PRO change'], axis=1)
 headers_keep = ['Age at Sx', 'Sex', 'BMI', 'MRI Generalized chondral damage', 'MRI Localized chondral defect (not degenerative)', 'MRI Subchondral cyst - Femur central compartment', 'MRI Subchondral cyst - Femur peripheral compartment', 'MRI Subchondral cyst - Acetabulum central compartment', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)','Ischial Spine (Post-op)', 'Crossover (Post-op)', 'Lateral CEA  (Post-op)', 'Joint Space - Medial (Post-op)', 'Joint Space - Central (Post-op)', 'Joint Space - Lateral (Post-op)', 'Coxa Profunda (Post-op)', 'Anterior CEA (Post-op)', 'Alpha Angle (Post-op)', 'Tonnis Grade (Pre-op)_1', 'Tonnis Grade (Pre-op)_2', 'Tonnis Grade (Post-op)_1', 'Tonnis Grade (Post-op)_2']
 x_pick = pro_change.drop(headers_keep, axis=1)
-
-
+##### pearson correlation coefficient test #####
+test = headers_keep.append(['dmHHS'])
+cor = onehotdata[test].corr()
+sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
+plt.show()
+cor_target = abs(cor['dmHHS'])
+sns.heatmap(cor_target, annot=True, cmap=plt.cm.Reds)
+plt.show()
+print(cor_target)
+##### test #####
 #hard code implementation
+"""
 x_picked = x_pick.iloc[:, [1, 3, 5]]
 print("list to pick from")
 x_pickheads = list(x_picked)
