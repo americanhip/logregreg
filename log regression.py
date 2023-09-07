@@ -40,9 +40,12 @@ headers_keep = ['Age at Sx', 'Sex', 'BMI', 'MRI Generalized chondral damage', 'M
 x_pick = pro_change.drop(headers_keep, axis=1)
 
 ##### pearson correlation coefficient test #####
-test = headers_keep.append(['dmHHS'])
-test2 = onehotdata[test]
-cor = test2.corr()
+headers_keep.append(['dmHHS'])
+test2 = onehotdata[headers_keep] ### <-- append adds onto an existing list so it returns nothing
+print(test2.head())
+#cor = test2.corr()
+
+"""
 sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
 plt.show()
 cor_target = abs(cor['dmHHS'])
@@ -51,7 +54,8 @@ print(relevant_features)
 
 ##### test #####
 #hard code implementation
-"""
+
+
 x_picked = x_pick.iloc[:, [1, 3, 5]]
 print("list to pick from")
 x_pickheads = list(x_picked)
