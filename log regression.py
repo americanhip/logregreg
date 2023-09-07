@@ -87,11 +87,11 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
 #def featselect(X_train, X_test, y_train, y_test):
     #log = 
 
-
+"""
 #mHHS
 #x_trainm, x_testm, y_trainm, y_testm = splittrain(pro_change, onehotdata['dmHHS'])
 #feat_colsmhhs = clf(x_trainm, y_trainm)
-x_col = pro_change.iloc[:, feat_colsmhhs]
+x_col = pro_change.iloc[:, feat_cols]
 print(x_col.head())
 logregreg(x_col, onehotdata['dmHHS'], "mHHS")
 
