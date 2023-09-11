@@ -71,7 +71,10 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
 
 def clf(X_train, y_train):
     clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
-    sfs1 = sfs(clf, k_features=40, forward=True, floating=False, verbose=2, scoring='accuracy', cv=5)
+    shapex = X_train.shape
+    size = round(shapex[1] * 0.75)
+    print(size)
+    sfs1 = sfs(clf, k_features= 3, forward=True, floating=False, verbose=2, scoring='accuracy', cv=5)
     #selected_features = sfs.fit(pro_change, mhhsy)
     sfs1 = sfs1.fit(X_train, y_train)
     feat_cols = list(sfs1.k_feature_idx_)
@@ -88,15 +91,25 @@ def splittrain(x_col, y_col):
 
 #mHHS
 x_trainm, x_testm, y_trainm, y_testm = splittrain(x_pick, onehotdata['dmHHS'])
-feat_colsmhhs = clf(x_trainm, y_trainm)
-toadd = x_pick.iloc[feat_colsmhhs]
-heads = list(toadd)
+#feat_colsmhhs = clf(x_trainm, y_trainm)
+feat_colsmhhs = [0, 3, 11]
+print("feat_colsmhhs")
+print(feat_colsmhhs)
 
-x_col = pro_change.iloc[:, feat_colsmhhs]
-print(x_col.head())
-logregreg(x_col, onehotdata['dmHHS'], "mHHS")
-
+x_pick.iloc[feat_colsmhhs]
+heads = list(x_pick)
+print("toadd")
+print(x_pick)
+print("heads")
+print(heads)
+headers_keep.extend(heads)
+print("headers")
+print(headers_keep)
+#x_col = pro_change.loc[:, feat_colsmhhs]
+#print(x_col.head())
+#logregreg(x_col, onehotdata['dmHHS'], "mHHS")
 """
+
 
 #NAHS
 X_trainN, X_testN, y_trainN, y_testN = train_test_split(pro_change, onehotdata['dNAHS'], test_size=0.25, random_state=16)
