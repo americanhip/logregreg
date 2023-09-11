@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score as acc
 from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from sklearn import metrics
+from sklearn import pipeline
 
 print("whatever")
 pd.set_option('display.max_columns', 60)
@@ -74,7 +75,7 @@ def clf(X_train, y_train):
     #selected_features = sfs.fit(pro_change, mhhsy)
     sfs1 = sfs1.fit(X_train, y_train)
     feat_cols = list(sfs1.k_feature_idx_)
-    print(feat_cols)
+    #print(feat_cols)
     return feat_cols
 
 def splittrain(x_col, y_col):
@@ -86,8 +87,11 @@ def splittrain(x_col, y_col):
 #to keep: LCEA preop, ACEA preop, BMI, Sex, Age at Sx, chondral damage
 
 #mHHS
-x_trainm, x_testm, y_trainm, y_testm = splittrain(pro_change, onehotdata['dmHHS'])
+x_trainm, x_testm, y_trainm, y_testm = splittrain(x_pick, onehotdata['dmHHS'])
 feat_colsmhhs = clf(x_trainm, y_trainm)
+toadd = x_pick.iloc[feat_colsmhhs]
+heads = list(toadd)
+
 x_col = pro_change.iloc[:, feat_colsmhhs]
 print(x_col.head())
 logregreg(x_col, onehotdata['dmHHS'], "mHHS")
