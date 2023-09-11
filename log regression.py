@@ -34,8 +34,6 @@ headers = list(onehotdata)
 #print(headers)
 pro_change = onehotdata.drop(['1y mHHS','dmHHS', '1y NAHS', 'dNAHS', '1y HOS-SSS','1y VAS','dVAS','dHOS','PRO change'], axis=1)
 headers_keep = ['Age at Sx', 'Sex', 'BMI', 'MRI Generalized chondral damage', 'MRI Localized chondral defect (not degenerative)', 'MRI Subchondral cyst - Femur central compartment', 'MRI Subchondral cyst - Femur peripheral compartment', 'MRI Subchondral cyst - Acetabulum central compartment', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)','Ischial Spine (Post-op)', 'Crossover (Post-op)', 'Lateral CEA  (Post-op)', 'Joint Space - Medial (Post-op)', 'Joint Space - Central (Post-op)', 'Joint Space - Lateral (Post-op)', 'Coxa Profunda (Post-op)', 'Anterior CEA (Post-op)', 'Alpha Angle (Post-op)', 'Tonnis Grade (Pre-op)_1', 'Tonnis Grade (Pre-op)_2', 'Tonnis Grade (Post-op)_1', 'Tonnis Grade (Post-op)_2']
-print(len(headers_keep))
-x_pick = pro_change.drop(headers_keep, axis=1)
 #print(x_pick.shape)
 #58 total factors to choose from --> pick 14 from x_pick.shape
 """
