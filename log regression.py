@@ -32,6 +32,7 @@ pro_change = onehotdata.drop(['1y mHHS','dmHHS', '1y NAHS', 'dNAHS', '1y HOS-SSS
 headers_keep = ['Age at Sx', 'Sex', 'BMI', 'MRI Generalized chondral damage', 'MRI Localized chondral defect (not degenerative)', 'MRI Subchondral cyst - Femur central compartment', 'MRI Subchondral cyst - Femur peripheral compartment', 'MRI Subchondral cyst - Acetabulum central compartment', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)','Ischial Spine (Post-op)', 'Crossover (Post-op)', 'Lateral CEA  (Post-op)', 'Joint Space - Medial (Post-op)', 'Joint Space - Central (Post-op)', 'Joint Space - Lateral (Post-op)', 'Coxa Profunda (Post-op)', 'Anterior CEA (Post-op)', 'Alpha Angle (Post-op)', 'Tonnis Grade (Pre-op)_1', 'Tonnis Grade (Pre-op)_2', 'Tonnis Grade (Post-op)_1', 'Tonnis Grade (Post-op)_2']
 x_pick = pro_change.drop(headers_keep, axis=1)
 
+#split data function
 def splittrain(x_col, y_col):
     X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
     y_train = y_train.ravel() #create 1D array
@@ -69,6 +70,7 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     plt.ylabel('True Positive Rate')
     plt.show()
 
+#random forest classifier feature selection
 def clf(X_train, y_train):
     clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
     shapex = X_train.shape
@@ -81,6 +83,28 @@ def clf(X_train, y_train):
     #print(feat_cols)
     return feat_cols
 
+#putting it all together
+def ml(PRO): #<-- PRO is a string
+    factor = 'd' + PRO
+    x_train, x_test, y_train, y_test = splittrain(x_pick, onehotdata[factor])
+    feat_cols = clf(x_train, y_train)
+    test = x_pick.iloc[:, feat_cols]
+    heads = list(test)
+    headers_keep.extend(heads)
+    x_col = pro_change.loc[:, headers_keep]
+    logregreg(x_col, onehotdata[factor], PRO)
+
+ml('mHHS')
+
+ml('NAHS')
+
+ml('HOS')
+
+ml('VAS')
+end = time.time()
+print("\nthis took",(end-start), "s")
+
+"""
 #mHHS
 x_trainm, x_testm, y_trainm, y_testm = splittrain(x_pick, onehotdata['dmHHS'])
 feat_colsmhhs = clf(x_trainm, y_trainm)
@@ -90,42 +114,36 @@ headers_keep.extend(heads)
 x_col = pro_change.loc[:, headers_keep]
 logregreg(x_col, onehotdata['dmHHS'], "mHHS")
 
-"""
-#NAHS
-X_trainN, X_testN, y_trainN, y_testN = train_test_split(pro_change, onehotdata['dNAHS'], test_size=0.25, random_state=16)
-y_trainN = y_trainN.ravel()
-y_testN = y_testN.ravel()
 
-feat_colsnahs = clf(X_trainN, y_trainN)
-x_col = pro_change.iloc[:, feat_colsnahs]
-print(x_col.head())
+#NAHS
+x_trainm, x_testm, y_trainm, y_testm = splittrain(x_pick, onehotdata['dNAHS'])
+feat_colsmhhs = clf(x_trainm, y_trainm)
+test = x_pick.iloc[:, feat_colsmhhs]
+heads = list(test)
+headers_keep.extend(heads)
+x_col = pro_change.loc[:, headers_keep]
 logregreg(x_col, onehotdata['dNAHS'], "NAHS")
 
 
-#iHOT
-X_trainH, X_testH, y_trainH, y_testH = train_test_split(pro_change, onehotdata['dHOS'], test_size=0.25, random_state=16)
-y_trainH = y_trainH.ravel()
-y_testH = y_testH.ravel()
 
-feat_colsHOS = clf(X_trainH, y_trainH)
-x_colh = pro_change.iloc[:, feat_colsHOS]
-print(x_colh.head())
-logregreg(x_colh, onehotdata['dHOS'], "HOS")
+#iHOT
+x_trainm, x_testm, y_trainm, y_testm = splittrain(x_pick, onehotdata['dHOS'])
+feat_colsmhhs = clf(x_trainm, y_trainm)
+test = x_pick.iloc[:, feat_colsmhhs]
+heads = list(test)
+headers_keep.extend(heads)
+x_col = pro_change.loc[:, headers_keep]
+logregreg(x_col, onehotdata['dHOS'], "HOS")
 
 
 #VAS
-X_trainV, X_testV, y_trainV, y_testV = train_test_split(pro_change, onehotdata['dVAS'], test_size=0.25, random_state=16)
-y_trainV = y_trainV.ravel()
-y_testV = y_testV.ravel()
-
-feat_colsVAS = clf(X_trainV, y_trainV)
-x_colv = pro_change.iloc[:, feat_colsVAS]
-print(x_colv.head())
-logregreg(x_colv, onehotdata['dVAS'], "VAS")
-
-
-
-
+x_trainm, x_testm, y_trainm, y_testm = splittrain(x_pick, onehotdata['dVAS'])
+feat_colsmhhs = clf(x_trainm, y_trainm)
+test = x_pick.iloc[:, feat_colsmhhs]
+heads = list(test)
+headers_keep.extend(heads)
+x_col = pro_change.loc[:, headers_keep]
+logregreg(x_col, onehotdata['dVAS'], "VAS")
 
 ##### NOTES #####
 
@@ -164,5 +182,3 @@ headers = list(onehotdatax)
 
 #gait levels --> 0 = normal, 1 = right antalgic, 2 = right trendelenberg, 3 = left antalgic, 4 = left trendelenberg, 5 = other
 """
-end = time.time()
-print("\nthis took",(end-start), "s")
