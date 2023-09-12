@@ -7,12 +7,14 @@ from sklearn.model_selection import train_test_split
 #from sklearn.metrics import accuracy_score as acc
 from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from sklearn import metrics
+import time
 
 
 print("whatever")
+start = time.time()
 pd.set_option('display.max_columns', 60)
 #pd.set_option('display.max_rows', 150)
-# implementing a logistic regression model using everything else to predict whether there will be a change in PROs.
+#implementing a logistic regression model using everything else to predict whether there will be a change in PROs.
 
 #read in xlsx file
 data = pd.read_csv('datatrimmed2.csv')
@@ -22,20 +24,13 @@ print("input df", data.head())
 data = data.dropna()
 print(data.shape)
 
-
-
 #create dummy variables
 onehotdata = pd.get_dummies(data, columns = ['Gait', 'Tonnis Grade (Pre-op)', 'Tonnis Grade (Post-op)'], drop_first = True)
-#print(onehotdata.head)
 headers = list(onehotdata)
 print(headers)
 pro_change = onehotdata.drop(['1y mHHS','dmHHS', '1y NAHS', 'dNAHS', '1y HOS-SSS','1y VAS','dVAS','dHOS','PRO change'], axis=1)
 headers_keep = ['Age at Sx', 'Sex', 'BMI', 'MRI Generalized chondral damage', 'MRI Localized chondral defect (not degenerative)', 'MRI Subchondral cyst - Femur central compartment', 'MRI Subchondral cyst - Femur peripheral compartment', 'MRI Subchondral cyst - Acetabulum central compartment', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)','Ischial Spine (Post-op)', 'Crossover (Post-op)', 'Lateral CEA  (Post-op)', 'Joint Space - Medial (Post-op)', 'Joint Space - Central (Post-op)', 'Joint Space - Lateral (Post-op)', 'Coxa Profunda (Post-op)', 'Anterior CEA (Post-op)', 'Alpha Angle (Post-op)', 'Tonnis Grade (Pre-op)_1', 'Tonnis Grade (Pre-op)_2', 'Tonnis Grade (Post-op)_1', 'Tonnis Grade (Post-op)_2']
 x_pick = pro_change.drop(headers_keep, axis=1)
-
-# find indices of factors we want to keep
-# keep into list
-# extend list of feat cols with indices
 
 def splittrain(x_col, y_col):
     X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
@@ -86,10 +81,6 @@ def clf(X_train, y_train):
     #print(feat_cols)
     return feat_cols
 
-
-
-#to keep: LCEA preop, ACEA preop, BMI, Sex, Age at Sx, chondral damage
-
 #mHHS
 x_trainm, x_testm, y_trainm, y_testm = splittrain(x_pick, onehotdata['dmHHS'])
 feat_colsmhhs = clf(x_trainm, y_trainm)
@@ -98,7 +89,6 @@ heads = list(test)
 headers_keep.extend(heads)
 x_col = pro_change.loc[:, headers_keep]
 logregreg(x_col, onehotdata['dmHHS'], "mHHS")
-
 
 """
 #NAHS
@@ -174,3 +164,5 @@ headers = list(onehotdatax)
 
 #gait levels --> 0 = normal, 1 = right antalgic, 2 = right trendelenberg, 3 = left antalgic, 4 = left trendelenberg, 5 = other
 """
+end = time.time()
+print("this took",(end-start), "s")
