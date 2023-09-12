@@ -4,10 +4,10 @@ from matplotlib import pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score as acc
+#from sklearn.metrics import accuracy_score as acc
 from mlxtend.feature_selection import SequentialFeatureSelector as sfs
 from sklearn import metrics
-from sklearn import pipeline
+
 
 print("whatever")
 pd.set_option('display.max_columns', 60)
@@ -37,14 +37,19 @@ x_pick = pro_change.drop(headers_keep, axis=1)
 # keep into list
 # extend list of feat cols with indices
 
+def splittrain(x_col, y_col):
+    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
+    y_train = y_train.ravel() #create 1D array
+    y_test = y_test.ravel()
+    return X_train, X_test, y_train, y_test
+
 # logistic regression function
 def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     # split X and y into training and testing sets
     
+    
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
 
-    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
-    y_train = y_train.ravel()
-    y_test = y_test.ravel()
 
     # instantiate the model (using the default parameters)
     logreg = LogisticRegression(solver = 'lbfgs', random_state=16, max_iter = 2500)
@@ -73,44 +78,29 @@ def clf(X_train, y_train):
     clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
     shapex = X_train.shape
     size = round(shapex[1] * 0.75)
-    print(size)
-    sfs1 = sfs(clf, k_features= 3, forward=True, floating=False, verbose=2, scoring='accuracy', cv=5)
+    #print(size)
+    sfs1 = sfs(clf, k_features= size, forward=True, floating=False, verbose=2, scoring='accuracy', cv=5)
     #selected_features = sfs.fit(pro_change, mhhsy)
     sfs1 = sfs1.fit(X_train, y_train)
     feat_cols = list(sfs1.k_feature_idx_)
     #print(feat_cols)
     return feat_cols
 
-def splittrain(x_col, y_col):
-    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
-    y_train = y_train.ravel() #create 1D array
-    y_test = y_test.ravel()
-    return X_train, X_test, y_train, y_test
+
 
 #to keep: LCEA preop, ACEA preop, BMI, Sex, Age at Sx, chondral damage
 
 #mHHS
 x_trainm, x_testm, y_trainm, y_testm = splittrain(x_pick, onehotdata['dmHHS'])
-#feat_colsmhhs = clf(x_trainm, y_trainm)
-feat_colsmhhs = [0, 3, 11]
-print("feat_colsmhhs")
-print(feat_colsmhhs)
-
-x_pick.iloc[feat_colsmhhs]
-heads = list(x_pick)
-print("toadd")
-print(x_pick)
-print("heads")
-print(heads)
+feat_colsmhhs = clf(x_trainm, y_trainm)
+test = x_pick.iloc[:, feat_colsmhhs]
+heads = list(test)
 headers_keep.extend(heads)
-print("headers")
-print(headers_keep)
-#x_col = pro_change.loc[:, feat_colsmhhs]
-#print(x_col.head())
-#logregreg(x_col, onehotdata['dmHHS'], "mHHS")
+x_col = pro_change.loc[:, headers_keep]
+logregreg(x_col, onehotdata['dmHHS'], "mHHS")
+
+
 """
-
-
 #NAHS
 X_trainN, X_testN, y_trainN, y_testN = train_test_split(pro_change, onehotdata['dNAHS'], test_size=0.25, random_state=16)
 y_trainN = y_trainN.ravel()
