@@ -1,0 +1,14 @@
+AAAUGHGHGUAGUGHUGHAUGHAGUHAGH
+
+Dataset
+- redo dataset AGAIN
+- figure out where most of the nulls are
+- create imputer for figuring out what to classify
+    - how to treat categorical variables ???
+
+Model
+- figure out which model to do
+- SVM
+- nonlin reg
+- decision tree
+    - currently at an AUC of 1 -- either data is being fed in or something is very wrong, different metric?
