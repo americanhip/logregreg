@@ -30,16 +30,17 @@ def df_pro(PRO):
     prePRO = 'Pre ' + PRO
     twoyPRO = '2y ' + PRO
     deltapro = 'd' + PRO
+    
     #print(prePRO)
     #print(twoyPRO)
     #print(deltapro)
     headers_keep.append(prePRO)
     headers_keep.append(twoyPRO)
     df_PRO = data.loc[:, headers_keep]
+    df_PRO = df_PRO.dropna(subset=[twoyPRO, prePRO])
     # put an imputer here?
     #df_PRO = df_PRO.dropna() <-- what nulls am i dropping here?
-    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO] > 0)\
-    df_PRO.dropna()
+    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO] > 0)
     df_PRO.drop(twoyPRO, axis=1)
     headers_keep.remove(prePRO)
     headers_keep.remove(twoyPRO)
@@ -120,6 +121,7 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
 
 def randforest(x_col, y_col):
     #DOES NOT ACCEPT NAN
+    
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
     clf = RandomForestClassifier()
     clf.fit(X_train, y_train)
@@ -127,12 +129,20 @@ def randforest(x_col, y_col):
     return x
     # figure out how to visualize/validate
 
+def impute(dfPRO):
+    heads = list(dfPRO)
+    imputer = KNNImputer(n_neighbors = 2)
+    arrayimputed = imputer.fit_transform(dfPRO)
+    dfimputed = pd.DataFrame(arrayimputed, columns=heads)
+    return dfimputed
+
 
 ##### main #####
 def ml(PRO, dfPRO): #<-- PRO is a string
     factor = 'd' + PRO
-    x_col = dfPRO.loc[:, headers_keep]
-    score = randforest(x_col, dfPRO[factor])
+    dfPROimp = impute(dfPRO)
+    x_col = dfPROimp.loc[:, headers_keep]
+    score = randforest(x_col, dfPROimp[factor])
     return score
     #headers_keep.extend(heads)
     #
@@ -141,14 +151,22 @@ def ml(PRO, dfPRO): #<-- PRO is a string
     #print(type(dfPRO[factor]))
     #logregreg(x_col, dfPRO[factor], PRO)
     #treereg(x_col, dfPRO[factor], PRO)
+
 #print(dfmHHS.isin(['N/a']).any())
+
 mHHSout = ml('mHHS', dfmHHS)
-#print(mHHSout)
+print(mHHSout)
+mHHSout = ml('NAHS', dfNAHS)
+print(mHHSout)
+mHHSout = ml('HOS-SSS', dfHOS)
+print(mHHSout)
+mHHSout = ml('VAS', dfVAS)
+print(mHHSout)
+"""
 #ml('NAHS', dfNAHS)
 #ml('HOS-SSS', dfHOS)
 #ml('VAS', dfVAS)
 
-"""
 data.to_csv('datatest.csv')
 headers = ['WC', 'Age at Sx', 'BMI', 'GM Repair', 'Pre mHHS', '2y mHHS', 'Pre NAHS', '2y NAHS', 'Pre HOS-SSS', '2y HOS-SSS', 'Pre VAS', '2y VAS', 'Tonnis Grade (Pre-op)', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Acetabular Inclination (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Neck-Shaft Angle (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)', 'Femoral Offset (Pre-op)', 'Lateral Imping', 'Side_R', 'Anterior Impinge_Mildly Positive', 'Anterior Impinge_Negative', 'Anterior Impinge_Positive', 'Sex_Male']
 """
