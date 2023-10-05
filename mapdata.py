@@ -1,11 +1,20 @@
 import numpy as np
 import pandas as pd
 print("running my stupid baka code")
-data = pd.read_csv('data1500redo.csv', low_memory=False)
+data = pd.read_csv('data1500.csv', low_memory=False)
 pd.set_option('display.max_columns', 60)
 print(data.head)
 
+#I HAVE TO DO THIS STUPID SHIT MANUALLY BECAUSE THESE ARE NOT SCOPES AND IF I TRY TO DROP THEM WITH TO_NUMERIC IT WILL MAKE IT NULL AND MIX THEM WITH ACTUAL SCOPE DATA
 data.drop(index=data[data['Lateral CEA (Pre-op)'] == 'THA'].index, inplace=True)
+data.drop(index=data[data['Lateral CEA (Pre-op)'] == 'NO XRAY'].index, inplace=True)
+data.drop(index=data[data['Alpha Angle (Pre-op)'] == 'NO XRAY'].index, inplace=True)
+data.drop(index=data[data['Joint Space - Medial (Pre-op)'] == '0.29\t0.29\t0.5\t127'].index, inplace=True)
+data.drop(index=data[data['Lateral CEA (Pre-op)'] == 'NO XRAYS'].index, inplace=True)
+data.drop(index=data[data['Lateral CEA (Pre-op)'] == 'BHR'].index, inplace=True)
+data.drop(index=data[data['Neck-Shaft Angle (Pre-op)'] == '132,4'].index, inplace=True)
+data.drop(index=data[data['Alpha Angle (Pre-op)'] == 'N/a'].index, inplace=True)
+
 data.loc[data['Sex'] == '0', 'Sex'] = None #<-- why the fuck is 0 read in as a string
 data.dropna(subset=['Sex'], inplace = True)
 

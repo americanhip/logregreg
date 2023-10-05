@@ -38,7 +38,8 @@ def df_pro(PRO):
     df_PRO = data.loc[:, headers_keep]
     # put an imputer here?
     #df_PRO = df_PRO.dropna() <-- what nulls am i dropping here?
-    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO] > 0)
+    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO] > 0)\
+    df_PRO.dropna()
     df_PRO.drop(twoyPRO, axis=1)
     headers_keep.remove(prePRO)
     headers_keep.remove(twoyPRO)
@@ -118,6 +119,7 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     plt.show()
 
 def randforest(x_col, y_col):
+    #DOES NOT ACCEPT NAN
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
     clf = RandomForestClassifier()
     clf.fit(X_train, y_train)
@@ -139,8 +141,8 @@ def ml(PRO, dfPRO): #<-- PRO is a string
     #print(type(dfPRO[factor]))
     #logregreg(x_col, dfPRO[factor], PRO)
     #treereg(x_col, dfPRO[factor], PRO)
-print(dfmHHS.isin(['THA']).any())
-#mHHSout = ml('mHHS', dfmHHS)
+#print(dfmHHS.isin(['N/a']).any())
+mHHSout = ml('mHHS', dfmHHS)
 #print(mHHSout)
 #ml('NAHS', dfNAHS)
 #ml('HOS-SSS', dfHOS)
