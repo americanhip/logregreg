@@ -17,7 +17,6 @@ print("whatever")
 start = time.time()
 pd.set_option('display.max_columns', 60)
 data = pd.read_csv('dataformat.csv')
-print("input df", data.head())
 
 #### data formatting
 #testing stuff for df_pro
@@ -40,8 +39,8 @@ def df_pro(PRO):
     df_PRO = df_PRO.dropna(subset=[twoyPRO, prePRO])
     # put an imputer here?
     #df_PRO = df_PRO.dropna() <-- what nulls am i dropping here?
-    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO] > 0)
-    df_PRO.drop(twoyPRO, axis=1)
+    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO])
+    df_PRO.drop([twoyPRO], axis=1, inplace=True)
     headers_keep.remove(prePRO)
     headers_keep.remove(twoyPRO)
     return df_PRO
@@ -129,12 +128,28 @@ def randforest(x_col, y_col):
     return x
     # figure out how to visualize/validate
 
+
 def impute(dfPRO):
-    heads = list(dfPRO)
+    df_num = dfPRO.select_dtypes(include='number')
+    df_cat = dfPRO.select_dtypes(include='bool')
+    #numerical imputer 
+    heads_num = list(df_num)
     imputer = KNNImputer(n_neighbors = 2)
-    arrayimputed = imputer.fit_transform(dfPRO)
-    dfimputed = pd.DataFrame(arrayimputed, columns=heads)
-    return dfimputed
+    arrayimputed = imputer.fit_transform(df_num)
+    df_num = pd.DataFrame(arrayimputed, columns=heads_num)
+    #categorical imputer
+    df_cat.replace(True, 1)
+    df_cat.replace(False, 0)
+    heads_cat = list(df_cat)
+    #print('dfcat', df_cat)
+    imputer = KNNImputer(n_neighbors = 2)
+    arrayimputed = imputer.fit_transform(df_cat)
+    df_cat = pd.DataFrame(arrayimputed, columns=heads_cat)
+    df_cat.replace(1, True)
+    df_cat.replace(0, False)
+    #join imputer
+    df_full = df_num.join(df_cat)
+    return df_full
 
 
 ##### main #####
@@ -153,16 +168,18 @@ def ml(PRO, dfPRO): #<-- PRO is a string
     #treereg(x_col, dfPRO[factor], PRO)
 
 #print(dfmHHS.isin(['N/a']).any())
-
+#print(dfmHHS.dtypes)
+#x = impute(dfmHHS)
 mHHSout = ml('mHHS', dfmHHS)
 print(mHHSout)
+"""
 mHHSout = ml('NAHS', dfNAHS)
 print(mHHSout)
 mHHSout = ml('HOS-SSS', dfHOS)
 print(mHHSout)
 mHHSout = ml('VAS', dfVAS)
 print(mHHSout)
-"""
+
 #ml('NAHS', dfNAHS)
 #ml('HOS-SSS', dfHOS)
 #ml('VAS', dfVAS)
