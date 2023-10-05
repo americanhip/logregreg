@@ -1,69 +1,94 @@
-#read in data from csv
 import numpy as np
 import pandas as pd
-
 print("running my stupid baka code")
-data = pd.read_csv('data_414.csv', low_memory=False)
-#data = pd.DataFrame(data)
-data = data.dropna()
-print(data.head())
+data = pd.read_csv('data1500redo.csv', low_memory=False)
+pd.set_option('display.max_columns', 60)
+print(data.head)
 
-data.loc[data['Sex'] == 'Male', 'Sex'] = False
-data.loc[data['Sex'] == 'Female', 'Sex'] = True
+data.drop(index=data[data['Lateral CEA (Pre-op)'] == 'THA'].index, inplace=True)
+data.loc[data['Sex'] == '0', 'Sex'] = None #<-- why the fuck is 0 read in as a string
+data.dropna(subset=['Sex'], inplace = True)
 
-data.loc[data['MRI Labral tear'] == 'No', 'MRI Labral tear'] = False
-data.loc[data['MRI Labral tear'] == 'Yes', 'MRI Labral tear'] = True
+data['GM Repair'] = data['GM Repair'].fillna(False)
+data.loc[data['Anterior Impinge'] == ' Mildly Positive', 'Anterior Impinge'] = 'Mildly Positive'
+data = pd.get_dummies(data, columns = ['Side', 'Anterior Impinge', 'Sex'], drop_first = True)
 
-data.loc[data['MRI Ligamentum teres tear'] == 'No', 'MRI Ligamentum teres tear'] = False
-data.loc[data['MRI Ligamentum teres tear'] == 'Yes', 'MRI Ligamentum teres tear'] = True
-
-data.loc[data['MRI AVN'] == 'No', 'MRI AVN'] = False
-data.loc[data['MRI AVN'] == 'Yes', 'MRI AVN'] = True
-
-data.loc[data['MRI Gluteus medius pathology'] == 'No', 'MRI Gluteus medius pathology'] = False
-data.loc[data['MRI Gluteus medius pathology'] == 'Yes', 'MRI Gluteus medius pathology'] = True
-
-data.loc[data['MRI Generalized chondral damage'] == 'No', 'MRI Generalized chondral damage'] = False
-data.loc[data['MRI Generalized chondral damage'] == 'Yes', 'MRI Generalized chondral damage'] = True
-
-data.loc[data['MRI Localized chondral defect (not degenerative)'] == 'No', 'MRI Localized chondral defect (not degenerative)'] = False
-data.loc[data['MRI Localized chondral defect (not degenerative)'] == 'Yes', 'MRI Localized chondral defect (not degenerative)'] = True
-
-data.loc[data['MRI Subchondral cyst - Femur central compartment'] == 'No', 'MRI Subchondral cyst - Femur central compartment'] = False
-data.loc[data['MRI Subchondral cyst - Femur central compartment'] == 'Yes', 'MRI Subchondral cyst - Femur central compartment'] = True
-
-data.loc[data['MRI Subchondral cyst - Femur peripheral compartment'] == 'No', 'MRI Subchondral cyst - Femur peripheral compartment'] = False
-data.loc[data['MRI Subchondral cyst - Femur peripheral compartment'] == 'Yes', 'MRI Subchondral cyst - Femur peripheral compartment'] = True
-
-data.loc[data['MRI Subchondral cyst - Acetabulum central compartment'] == 'No', 'MRI Subchondral cyst - Acetabulum central compartment'] = False
-data.loc[data['MRI Subchondral cyst - Acetabulum central compartment'] == 'Yes', 'MRI Subchondral cyst - Acetabulum central compartment'] = True
-
-data.loc[data['MRI Perilabral cyst'] == 'No', 'MRI Perilabral cyst'] = False
-data.loc[data['MRI Perilabral cyst'] == 'Yes', 'MRI Perilabral cyst'] = True
-
-data.loc[data['MRI Capsular Laxity'] == 'No', 'MRI Capsular Laxity'] = False
-data.loc[data['MRI Capsular Laxity'] == 'Yes', 'MRI Capsular Laxity'] = True
+data.loc[data['GM Repair'] == 'No', 'GM Repair'] = False
+data.loc[data['GM Repair'] == 'Yes', 'GM Repair'] = True
 
 data.loc[data['Coxa Profunda (Pre-op)'] == 'No', 'Coxa Profunda (Pre-op)'] = False
 data.loc[data['Coxa Profunda (Pre-op)'] == 'Yes', 'Coxa Profunda (Pre-op)'] = True
-"""
-data.loc[data['Gait'] == 'No', 'Gait'] = False
-data.loc[data['Gait'] == 'Yes', 'Gait'] = True
-"""
 
-data.loc[data['Anterior Impinge'] == 'Negative', 'Anterior Impinge'] = 0
-data.loc[data['Anterior Impinge'] == 'Positive', 'Anterior Impinge'] = 1
-data.loc[data['Anterior Impinge'] == 'Mildly Positive', 'Anterior Impinge'] = 2
+data.loc[data['WC'] == 'FALSE', 'WC'] = False
+data.loc[data['WC'] == 'TRUE', 'WC'] = True
 
 data.loc[data['Lateral Imping'] == ' Negative', 'Lateral Imping'] = False
 data.loc[data['Lateral Imping'] == 'Positive', 'Lateral Imping'] = True
 
-data.loc[data['Internal Snapping'] == 'Negative', 'Internal Snapping'] = False
-data.loc[data['Internal Snapping'] == 'Positive', 'Internal Snapping'] = True
+"""
+isch = data.loc[:, 'Ischial Spine (Pre-op)']
+cross = data.loc[:, 'Crossover (Pre-op)']
+data['Isch true'] = (isch > 0)
+data['Cross true'] = (cross > 20)
+data['Retroversion'] = (isch > 0 and cross > 20)
+data.drop['Ischial Spine (Pre-op)']
+data.drop['Crossover (Pre-op)']
+"""
+print(data.head) #test to see whether data works
+print(data.shape)
 
-data.loc[data['External Snapp'] == 'Negative', 'External Snapp'] = False
-data.loc[data['External Snapp'] == 'Positive', 'External Snapp'] = True
-#d_sex = {'Female': True, 'Male': False}
-#d_cond = {'Yes': True, 'No':False}
-print(data.head())
+print(list(data))
+
 data.to_csv('dataformat.csv')
+
+headers_keep = ['WC', 'Age at Sx', 'BMI', 'GM Repair', 'Tonnis Grade (Pre-op)', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Acetabular Inclination (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Neck-Shaft Angle (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)', 'Femoral Offset (Pre-op)', 'Lateral Imping', 'Side_R', 'Anterior Impinge_Negative', 'Anterior Impinge_Positive', 'Sex_Male']
+
+def null_count(df_PRO, headers_keep): #input dataframe, headers_keep
+    #sudo
+    """
+    array = []
+    list_index = 0
+    for i in headers_keep:
+        x = df_PRO[i]
+        #access column of df_PRO
+        #count nulls and sum
+        #append to array
+        array.append() #<-- returns a bool telling us whether it's true or false
+        list_index += 1
+    return array
+    """
+
+def df_pro(PRO):
+    prePRO = 'Pre ' + PRO
+    twoyPRO = '2y ' + PRO
+    deltapro = 'd' + PRO
+    headers_keep.append(prePRO)
+    headers_keep.append(twoyPRO)
+    df_PRO = data.loc[:, headers_keep]
+    # put an imputer here?
+    df_PRO = df_PRO.dropna(subset=[twoyPRO, prePRO])
+    x = (df_PRO[twoyPRO] - df_PRO[prePRO] > 0)
+    
+    df_PRO.drop(twoyPRO, axis=1)
+    headers_keep.remove(prePRO)
+    headers_keep.remove(twoyPRO)
+    nacount = df_PRO.isna().sum()
+    
+    return df_PRO, nacount
+
+
+dfmHHS, nullmHHS = df_pro('mHHS')
+print(nullmHHS)
+print(data.shape)
+print("to")
+print(dfmHHS.shape)
+"""
+dfNAHS, nullNAHS = df_pro('NAHS')
+dfHOS, nullHOS = df_pro('HOS-SSS')
+dfVAS, nullVAS = df_pro('VAS')
+print(nullmHHS, nullNAHS, nullHOS, nullVAS)
+"""
+"""
+headers = ['WC', 'Age at Sx', 'BMI', 'GM Repair', 'Pre mHHS', '2y mHHS', 'Pre NAHS', '2y NAHS', 'Pre HOS-SSS', '2y HOS-SSS', 'Pre VAS', '2y VAS', 'Tonnis Grade (Pre-op)', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Acetabular Inclination (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Neck-Shaft Angle (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)', 'Femoral Offset (Pre-op)', 'Lateral Imping', 'Side_R', 'Anterior Impinge_Mildly Positive', 'Anterior Impinge_Negative', 'Anterior Impinge_Positive', 'Sex_Male']
+
+"""
