@@ -6,6 +6,7 @@ import numpy as np
 import time
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn import tree
 from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
@@ -13,18 +14,16 @@ from sklearn import metrics
 from sklearn.impute import KNNImputer
 from sklearn.impute import SimpleImputer
 
-print("whatever")
+print("yay! yippee! yay!!!")
 start = time.time()
 pd.set_option('display.max_columns', 60)
 data = pd.read_csv('dataformat.csv')
 
-#### data formatting
-#testing stuff for df_pro
+##### preprocessing ################################################################################
 
 headers_keep = ['WC', 'Age at Sx', 'BMI', 'GM Repair', 'Tonnis Grade (Pre-op)', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Acetabular Inclination (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Neck-Shaft Angle (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)', 'Femoral Offset (Pre-op)', 'Lateral Imping', 'Side_R', 'Anterior Impinge_Negative', 'Anterior Impinge_Positive', 'Sex_Male']
 
-#ischial spine present AND crossover > 20 --> TRUE for retroversion
-
+#defining dataframes
 def df_pro(PRO):
     prePRO = 'Pre ' + PRO
     twoyPRO = '2y ' + PRO
@@ -39,11 +38,41 @@ def df_pro(PRO):
     df_PRO = df_PRO.dropna(subset=[twoyPRO, prePRO])
     # put an imputer here?
     #df_PRO = df_PRO.dropna() <-- what nulls am i dropping here?
-    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO])
+    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO] > 0)
     df_PRO.drop([twoyPRO], axis=1, inplace=True)
     headers_keep.remove(prePRO)
     headers_keep.remove(twoyPRO)
     return df_PRO
+
+#split fcn into training/testing sets, ravel into 1D array
+def splittrain(x_col, y_col):
+    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.5, random_state=16)
+    y_train = y_train.ravel() #create 1D array
+    y_test = y_test.ravel()
+    return X_train, X_test, y_train, y_test
+
+#impute data in between to complete dataset
+def impute(dfPRO):
+    df_num = dfPRO.select_dtypes(include='number')
+    df_cat = dfPRO.select_dtypes(include='bool')
+    #numerical imputer 
+    heads_num = list(df_num)
+    imputer = KNNImputer(n_neighbors = 2)
+    arrayimputed = imputer.fit_transform(df_num)
+    df_num = pd.DataFrame(arrayimputed, columns=heads_num)
+    #categorical imputer
+    df_cat.replace(True, 1)
+    df_cat.replace(False, 0)
+    heads_cat = list(df_cat)
+    #print('dfcat', df_cat)
+    imputer = KNNImputer(n_neighbors = 2)
+    arrayimputed = imputer.fit_transform(df_cat)
+    df_cat = pd.DataFrame(arrayimputed, columns=heads_cat)
+    df_cat.replace(1, True)
+    df_cat.replace(0, False)
+    #join imputer
+    df_full = df_num.join(df_cat)
+    return df_full
 
 
 dfmHHS = df_pro('mHHS')
@@ -55,14 +84,7 @@ print('Dataset for NAHS', dfNAHS.shape[0])
 print('Dataset for HOS', dfHOS.shape[0])
 print('Dataset for VAS', dfVAS.shape[0])
 
-
-##### regressions#####
-
-def splittrain(x_col, y_col):
-    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.5, random_state=16)
-    y_train = y_train.ravel() #create 1D array
-    y_test = y_test.ravel()
-    return X_train, X_test, y_train, y_test
+##### regressions ################################################################################
 
 # decision tree
 def treereg(x_col, y_col, dep_var):
@@ -89,6 +111,7 @@ def treereg(x_col, y_col, dep_var):
     plt.ylabel('True Positive Rate')
     plt.show()
     """
+#its aight.
 
 # logistic regression function
 def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
@@ -117,7 +140,9 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.show()
+#bad. worse than random
 
+#random forest classifier function
 def randforest(x_col, y_col):
     #DOES NOT ACCEPT NAN
     
@@ -127,32 +152,18 @@ def randforest(x_col, y_col):
     x = clf.score(X_test, y_test)
     return x
     # figure out how to visualize/validate
+#does really good but categorical
 
+#K nearest neighbor regressor
+def KNR(x_col, y_col):
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
+    neigh = KNeighborsRegressor(n_neighbors=2)
+    neigh.fit(X_train, y_train)
+    score = neigh.score(X_test, y_test)
+    return score
+#sucks ASS. literally negative
 
-def impute(dfPRO):
-    df_num = dfPRO.select_dtypes(include='number')
-    df_cat = dfPRO.select_dtypes(include='bool')
-    #numerical imputer 
-    heads_num = list(df_num)
-    imputer = KNNImputer(n_neighbors = 2)
-    arrayimputed = imputer.fit_transform(df_num)
-    df_num = pd.DataFrame(arrayimputed, columns=heads_num)
-    #categorical imputer
-    df_cat.replace(True, 1)
-    df_cat.replace(False, 0)
-    heads_cat = list(df_cat)
-    #print('dfcat', df_cat)
-    imputer = KNNImputer(n_neighbors = 2)
-    arrayimputed = imputer.fit_transform(df_cat)
-    df_cat = pd.DataFrame(arrayimputed, columns=heads_cat)
-    df_cat.replace(1, True)
-    df_cat.replace(0, False)
-    #join imputer
-    df_full = df_num.join(df_cat)
-    return df_full
-
-
-##### main #####
+##### main function #################################################################################
 def ml(PRO, dfPRO): #<-- PRO is a string
     factor = 'd' + PRO
     dfPROimp = impute(dfPRO)
@@ -167,12 +178,21 @@ def ml(PRO, dfPRO): #<-- PRO is a string
     #logregreg(x_col, dfPRO[factor], PRO)
     #treereg(x_col, dfPRO[factor], PRO)
 
-#print(dfmHHS.isin(['N/a']).any())
-#print(dfmHHS.dtypes)
-#x = impute(dfmHHS)
+##### workspace #####################################################################################
+
 mHHSout = ml('mHHS', dfmHHS)
 print(mHHSout)
+mHHSout = ml('NAHS', dfNAHS)
+print(mHHSout)
+mHHSout = ml('HOS-SSS', dfHOS)
+print(mHHSout)
+mHHSout = ml('VAS', dfVAS)
+print(mHHSout)
+
+
 """
+#print(dfmHHS.isin(['N/a']).any())
+#print(dfmHHS.dtypes)
 mHHSout = ml('NAHS', dfNAHS)
 print(mHHSout)
 mHHSout = ml('HOS-SSS', dfHOS)
