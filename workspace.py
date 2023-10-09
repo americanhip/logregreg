@@ -1,8 +1,12 @@
 import pandas as pd
 import numpy as np
-import 
-from linreg.py import *
-
+import linreg
+### models to choose from 
+#treereg
+#logregreg
+#randforest
+#KNR
+print("wahoo!")
 ##### main function #################################################################################
 def ml(PRO, dfPRO): #<-- PRO is a string
     factor = 'd' + PRO
@@ -19,7 +23,7 @@ def ml(PRO, dfPRO): #<-- PRO is a string
     #treereg(x_col, dfPRO[factor], PRO)
 
 ##### workspace #####################################################################################
-
+"""
 mHHSout = ml('mHHS', dfmHHS)
 print(mHHSout)
 mHHSout = ml('NAHS', dfNAHS)
@@ -28,3 +32,4 @@ mHHSout = ml('HOS-SSS', dfHOS)
 print(mHHSout)
 mHHSout = ml('VAS', dfVAS)
 print(mHHSout)
+"""
