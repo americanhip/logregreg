@@ -17,7 +17,7 @@ from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
 
 print("yay! yippee! yay!!!")
-start = time.time()
+#start = time.time()
 pd.set_option('display.max_columns', 60)
 data = pd.read_csv('dataformat.csv')
 
@@ -98,9 +98,9 @@ def impute(dfPRO):
     return df_full
 
 
-##### regressions ################################################################################
+##### model ################################################################################
 
-# decision tree
+# decision tree -- categorical
 def treereg(x_col, y_col, dep_var):
     #fjalskdfjs
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
@@ -139,13 +139,25 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
 #bad. worse than random
 
 #random forest classifier function
-def randforest(x_col, y_col):
+def randforestclass(x_col, y_col, dep_var):
     #DOES NOT ACCEPT NAN
     
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
     clf = RandomForestClassifier()
     clf.fit(X_train, y_train)
     x = clf.score(X_test, y_test)
+
+    y_pred = clf.predict(X_test)
+    y_pred_proba = clf.predict_proba(X_test)[::,1]
+    #print(y_pred_proba)
+    fpr, tpr, _ = metrics.roc_curve(y_test,  y_pred_proba)
+    auc = metrics.roc_auc_score(y_test, y_pred_proba)
+    plt.plot(fpr,tpr,label="data 1, auc="+str(auc))
+    plt.legend(loc=4)
+    plt.title("Goodness of Fit of Logistic Regression Model For " + dep_var)
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.show()
     return x
     # figure out how to visualize/validate
 #does really good but categorical
@@ -162,19 +174,22 @@ def KNR(x_col, y_col):
 #multilayer perceptron regressor
 def neuralnet(x_col, y_col):
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
-    regr = MLPRegressor(random_state=1, max_iter=500, activation='logistic', solver='adam', verbose = True).fit(X_train, y_train)
+    regr = MLPRegressor(random_state=1, max_iter=5000, activation='logistic', solver='lbfgs', verbose = False).fit(X_train, y_train)
     regr.predict(X_test)
     score = regr.score(X_test, y_test)
     return score
 #horrible. literally bad and i cant get it working. sad!
 
 #epsilon-support vector regression -- in progress
-def SVR(x_col, y_col):
+def supvec(x_col, y_col):
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
-    regr = SVR(kernel='poly', degree = 5)
+    regr = SVR(kernel='poly', degree = 24)
     regr.fit(X_test, y_test)
-    regr.predict(X_test)
-    
+    #regr.predict(X_test)
+    x = regr.score(X_test, y_test)
+    return x
+#at least it's positive this time! still max 0.2 though and thats like after overfitting like hell
+
 #Random forest regressor
 def randforestreg(x_col, y_col):
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
