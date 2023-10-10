@@ -1,4 +1,4 @@
-#Defining machine learning models
+#Defining machine learning models and preprocessing functions
 #uuuuhghghghugghghhghghguuuuuhghghgughgughghgugu
 
 import pandas as pd
@@ -12,7 +12,9 @@ from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
 from sklearn import metrics
 from sklearn.impute import KNNImputer
-from sklearn.impute import SimpleImputer
+from sklearn.neural_network import MLPRegressor
+from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
 
 print("yay! yippee! yay!!!")
 start = time.time()
@@ -38,6 +40,27 @@ def df_pro(PRO):
     df_PRO = df_PRO.dropna(subset=[twoyPRO, prePRO])
     # put an imputer here?
     #df_PRO = df_PRO.dropna() <-- what nulls am i dropping here?
+    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO])
+    df_PRO.drop([twoyPRO], axis=1, inplace=True)
+    headers_keep.remove(prePRO)
+    headers_keep.remove(twoyPRO)
+    return df_PRO
+
+#return a categorical change dataframe instead of a number
+def df_procat(PRO):
+    prePRO = 'Pre ' + PRO
+    twoyPRO = '2y ' + PRO
+    deltapro = 'd' + PRO
+    
+    #print(prePRO)
+    #print(twoyPRO)
+    #print(deltapro)
+    headers_keep.append(prePRO)
+    headers_keep.append(twoyPRO)
+    df_PRO = data.loc[:, headers_keep]
+    df_PRO = df_PRO.dropna(subset=[twoyPRO, prePRO])
+    # put an imputer here?
+    #df_PRO = df_PRO.dropna() <-- what nulls am i dropping here?
     df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO] > 0)
     df_PRO.drop([twoyPRO], axis=1, inplace=True)
     headers_keep.remove(prePRO)
@@ -46,7 +69,7 @@ def df_pro(PRO):
 
 #split fcn into training/testing sets, ravel into 1D array
 def splittrain(x_col, y_col):
-    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.5, random_state=16)
+    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
     y_train = y_train.ravel() #create 1D array
     y_test = y_test.ravel()
     return X_train, X_test, y_train, y_test
@@ -75,28 +98,14 @@ def impute(dfPRO):
     return df_full
 
 
-dfmHHS = df_pro('mHHS')
-dfNAHS = df_pro('NAHS')
-dfHOS = df_pro('HOS-SSS')
-dfVAS = df_pro('VAS')
-print('Dataset for mHHS', dfmHHS.shape[0])
-print('Dataset for NAHS', dfNAHS.shape[0])
-print('Dataset for HOS', dfHOS.shape[0])
-print('Dataset for VAS', dfVAS.shape[0])
-
 ##### regressions ################################################################################
 
 # decision tree
 def treereg(x_col, y_col, dep_var):
     #fjalskdfjs
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
-    print(x_col)
-    print(y_col)
-    print(list(x_col))
-    print(list(y_col))
-    """
     clf = tree.DecisionTreeClassifier()
-    clf = clf.fit(x_col, y_col)
+    clf = clf.fit(X_train, y_train)
     #tree.plot_tree(clf)
     #plt.figure()
     y_pred = clf.predict(X_test)
@@ -110,27 +119,14 @@ def treereg(x_col, y_col, dep_var):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.show()
-    """
-#its aight.
+#literally 0.5 for all PROs.
 
 # logistic regression function
 def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
-    # split X and y into training and testing sets
-    
-    
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
-
-
-    # instantiate the model (using the default parameters)
     logreg = LogisticRegression(solver = 'lbfgs', random_state=16, max_iter = 2500, class_weight = 'balanced')
-
-    # fit the model with data
     logreg.fit(X_train, y_train)
-
     y_pred = logreg.predict(X_test)
-
-    # import the metrics class
-
     y_pred_proba = logreg.predict_proba(X_test)[::,1]
     fpr, tpr, _ = metrics.roc_curve(y_test,  y_pred_proba)
     auc = metrics.roc_auc_score(y_test, y_pred_proba)
@@ -163,9 +159,30 @@ def KNR(x_col, y_col):
     return score
 #sucks ASS. literally negative
 
+#multilayer perceptron regressor
+def neuralnet(x_col, y_col):
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
+    regr = MLPRegressor(random_state=1, max_iter=500, activation='logistic', solver='adam', verbose = True).fit(X_train, y_train)
+    regr.predict(X_test)
+    score = regr.score(X_test, y_test)
+    return score
+#horrible. literally bad and i cant get it working. sad!
 
-
-
+#epsilon-support vector regression -- in progress
+def SVR(x_col, y_col):
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
+    regr = SVR(kernel='poly', degree = 5)
+    regr.fit(X_test, y_test)
+    regr.predict(X_test)
+    
+#Random forest regressor
+def randforestreg(x_col, y_col):
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
+    clf = RandomForestRegressor()
+    clf.fit(X_train, y_train)
+    x = clf.score(X_test, y_test)
+    return x
+#NEGATIVE.....
 
 """
 #print(dfmHHS.isin(['N/a']).any())
