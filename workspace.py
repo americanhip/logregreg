@@ -5,9 +5,6 @@ import linreg as lg
 print("wahoo!")
 
 
-
-
-
 headers_keep = ['WC', 'Age at Sx', 'BMI', 'GM Repair', 'Tonnis Grade (Pre-op)', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Acetabular Inclination (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Neck-Shaft Angle (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)', 'Femoral Offset (Pre-op)', 'Lateral Imping', 'Side_R', 'Anterior Impinge_Negative', 'Anterior Impinge_Positive', 'Sex_Male']
 
 ##### main function #################################################################################
@@ -15,7 +12,7 @@ def ml(PRO, dfPRO): #<-- PRO is a string
     factor = 'd' + PRO
     dfPROimp = lg.impute(dfPRO)
     x_col = dfPROimp.loc[:, headers_keep]
-    score = lg.logregreg(x_col, dfPROimp[factor], PRO)
+    score = lg.randforestclass(x_col, dfPROimp[factor], PRO)
     return score
     #headers_keep.extend(heads)
     #
@@ -28,10 +25,11 @@ def ml(PRO, dfPRO): #<-- PRO is a string
     #
 
 ##### workspace #####################################################################################
+
 dfmHHS = lg.df_procat('mHHS')
 dfNAHS = lg.df_procat('NAHS')
-dfHOS = lg.df_procat('HOS-SSS')
 dfVAS = lg.df_procat('VAS')
+dfHOS = lg.df_procat('HOS')
 
 mHHSout = ml('mHHS', dfmHHS)
 print(mHHSout)
@@ -44,3 +42,11 @@ print(mHHSout)
 
 mHHSout = ml('VAS', dfVAS)
 print(mHHSout)
+
+"""
+
+mcidmhhs = lg.MCID('Pre mHHS')
+mcidnahs = lg.MCID('Pre NAHS')
+mcidvas = lg.MCID('Pre VAS')
+mcidhos = lg.MCID('Pre HOS-SSS')
+"""

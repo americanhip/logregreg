@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 import time
+from scipy import stats
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsRegressor
@@ -15,6 +16,8 @@ from sklearn.impute import KNNImputer
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
 
 print("yay! yippee! yay!!!")
 #start = time.time()
@@ -24,6 +27,20 @@ data = pd.read_csv('dataformat.csv')
 ##### preprocessing ################################################################################
 
 headers_keep = ['WC', 'Age at Sx', 'BMI', 'GM Repair', 'Tonnis Grade (Pre-op)', 'Ischial Spine (Pre-op)', 'Crossover (Pre-op)', 'Lateral CEA (Pre-op)', 'Acetabular Inclination (Pre-op)', 'Joint Space - Medial (Pre-op)', 'Joint Space - Central (Pre-op)', 'Joint Space - Lateral (Pre-op)', 'Neck-Shaft Angle (Pre-op)', 'Coxa Profunda (Pre-op)', 'Anterior CEA (Pre-op)', 'Alpha Angle (Pre-op)', 'Femoral Offset (Pre-op)', 'Lateral Imping', 'Side_R', 'Anterior Impinge_Negative', 'Anterior Impinge_Positive', 'Sex_Male']
+
+#MCID
+def MCID(PRO): #input: PRO = string, df_PRO put in whole column of PROs
+    #jfalskdjafld
+    twoyPRO = '2y ' + PRO
+    #df_PRO = data.loc[:, twoyPRO]
+    stdpro = data[PRO].std(axis=0)
+    mcid = stdpro / 2
+    return mcid
+
+mcidmHHS = MCID('Pre mHHS')
+mcidNAHS = MCID('Pre NAHS')
+mcidVAS = MCID('Pre VAS')
+mcidHOS = MCID('Pre HOS-SSS')
 
 #defining dataframes
 def df_pro(PRO):
@@ -46,12 +63,28 @@ def df_pro(PRO):
     headers_keep.remove(twoyPRO)
     return df_PRO
 
+mHHSPASS = 74
+NAHSPASS = 85.6
+HOSPASS = 75
+VASPASS = 1
+
 #return a categorical change dataframe instead of a number
 def df_procat(PRO):
+    mcidpro = 'mcid'+ PRO
+    passpro = PRO + 'PASS'
+
+    if PRO == 'HOS':
+        PRO = PRO + '-SSS'
+    
     prePRO = 'Pre ' + PRO
     twoyPRO = '2y ' + PRO
     deltapro = 'd' + PRO
+
+    mcidproval = eval(mcidpro)
     
+    print(PRO)
+    print('mcid')
+    print(eval(mcidpro))
     #print(prePRO)
     #print(twoyPRO)
     #print(deltapro)
@@ -61,7 +94,8 @@ def df_procat(PRO):
     df_PRO = df_PRO.dropna(subset=[twoyPRO, prePRO])
     # put an imputer here?
     #df_PRO = df_PRO.dropna() <-- what nulls am i dropping here?
-    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO] > 0)
+    df_PRO['MCID'] = (df_PRO[twoyPRO] - df_PRO[prePRO] > mcidproval)
+    df_PRO['PASS'] = (df_PRO[twoyPRO] >= eval(passpro))
     df_PRO.drop([twoyPRO], axis=1, inplace=True)
     headers_keep.remove(prePRO)
     headers_keep.remove(twoyPRO)
@@ -96,6 +130,11 @@ def impute(dfPRO):
     #join imputer
     df_full = df_num.join(df_cat)
     return df_full
+
+
+
+
+#defining PASS -- literature values
 
 
 ##### model ################################################################################
@@ -146,21 +185,14 @@ def randforestclass(x_col, y_col, dep_var):
     clf = RandomForestClassifier()
     clf.fit(X_train, y_train)
     x = clf.score(X_test, y_test)
-
-    y_pred = clf.predict(X_test)
-    y_pred_proba = clf.predict_proba(X_test)[::,1]
-    #print(y_pred_proba)
-    fpr, tpr, _ = metrics.roc_curve(y_test,  y_pred_proba)
-    auc = metrics.roc_auc_score(y_test, y_pred_proba)
-    plt.plot(fpr,tpr,label="data 1, auc="+str(auc))
-    plt.legend(loc=4)
-    plt.title("Goodness of Fit of Logistic Regression Model For " + dep_var)
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.show()
-    return x
+    y_pred_test = clf.predict(X_test)
+    fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred_test, pos_label=1)
+    #print(fpr, tpr)
+    #plt.plot(fpr,tpr)
+    #plt.legend(loc=4)
+    #plt.show()
     # figure out how to visualize/validate
-#does really good but categorical
+#does really good on R2 but categorical
 
 #K nearest neighbor regressor
 def KNR(x_col, y_col):
@@ -198,6 +230,9 @@ def randforestreg(x_col, y_col):
     x = clf.score(X_test, y_test)
     return x
 #NEGATIVE.....
+
+
+
 
 """
 #print(dfmHHS.isin(['N/a']).any())
