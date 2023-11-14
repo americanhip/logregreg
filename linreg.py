@@ -6,17 +6,20 @@ import numpy as np
 import time
 from scipy import stats
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
+from sklearn.linear_model import RidgeClassifierCV
 from sklearn import tree
+from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import CategoricalNB
 from matplotlib import pyplot as plt
 from sklearn import metrics
 from sklearn.impute import KNNImputer
 from sklearn.neural_network import MLPRegressor
-from sklearn.svm import SVR
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR, SVC
 from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import GridSearchCV
 import seaborn as sns
 
 print("yay! yippee! yay!!!")
@@ -91,10 +94,11 @@ def df_procat(PRO):
     headers_keep.append(prePRO)
     headers_keep.append(twoyPRO)
     df_PRO = data.loc[:, headers_keep]
-    df_PRO = df_PRO.dropna(subset=[twoyPRO, prePRO])
+    #df_PRO = df_PRO.dropna(subset=[twoyPRO, prePRO])
     # put an imputer here?
     #df_PRO = df_PRO.dropna() <-- what nulls am i dropping here?
-    df_PRO['MCID'] = (df_PRO[twoyPRO] - df_PRO[prePRO] > mcidproval)
+    df_PRO[deltapro] = (df_PRO[twoyPRO] - df_PRO[prePRO] > mcidproval)
+    df_PRO['change'] = (df_PRO[twoyPRO] - df_PRO[prePRO] > 0)
     df_PRO['PASS'] = (df_PRO[twoyPRO] >= eval(passpro))
     df_PRO.drop([twoyPRO], axis=1, inplace=True)
     headers_keep.remove(prePRO)
@@ -103,7 +107,7 @@ def df_procat(PRO):
 
 #split fcn into training/testing sets, ravel into 1D array
 def splittrain(x_col, y_col):
-    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.25, random_state=16)
+    X_train, X_test, y_train, y_test = train_test_split(x_col, y_col, test_size=0.5, random_state=16)
     y_train = y_train.ravel() #create 1D array
     y_test = y_test.ravel()
     return X_train, X_test, y_train, y_test
@@ -167,6 +171,7 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     logreg.fit(X_train, y_train)
     y_pred = logreg.predict(X_test)
     y_pred_proba = logreg.predict_proba(X_test)[::,1]
+    scorex = logreg.score(X_test, y_test)
     fpr, tpr, _ = metrics.roc_curve(y_test,  y_pred_proba)
     auc = metrics.roc_auc_score(y_test, y_pred_proba)
     plt.plot(fpr,tpr,label="data 1, auc="+str(auc))
@@ -175,6 +180,7 @@ def logregreg(x_col, y_col, dep_var): #dep_var needs to be a string
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.show()
+    return scorex
 #bad. worse than random
 
 #random forest classifier function
@@ -182,26 +188,67 @@ def randforestclass(x_col, y_col, dep_var):
     #DOES NOT ACCEPT NAN
     
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
-    clf = RandomForestClassifier()
-    clf.fit(X_train, y_train)
-    x = clf.score(X_test, y_test)
-    y_pred_test = clf.predict(X_test)
+
+
+    #RANDOM GRID FOR HYPERPARAMETER
+
+    # Number of trees in random forest
+    n_estimators = [int(x) for x in np.linspace(start = 5, stop = 150, num = 10)]
+    # Number of features to consider at every split
+    max_features = ['auto', 'sqrt']
+    # Maximum number of levels in tree
+    max_depth = [int(x) for x in np.linspace(5, 10, num = 11)]
+    max_depth.append(None)
+    # Minimum number of samples required to split a node
+    min_samples_split = [2, 5, 10]
+    # Minimum number of samples required at each leaf node
+    min_samples_leaf = [1, 2, 4]
+    # Method of selecting samples for training each tree
+    bootstrap = [True, False]# Create the random grid
+    random_grid = {'n_estimators': n_estimators,
+                'max_features': max_features,
+                'max_depth': max_depth,
+                'min_samples_split': min_samples_split,
+                'min_samples_leaf': min_samples_leaf,
+                'bootstrap': bootstrap}
+    
+    clf = RandomForestClassifier(random_grid)
+    grid_search = GridSearchCV(estimator = clf, param_grid = random_grid, cv=5, n_jobs=-1, verbose=3)
+
+    grd = grid_search.fit(X_train, y_train)
+    print(f"THE BEST PARAMETERS: \n {grid_search.best_params_}")
+    print(f"BEST SCORE: {grid_search.best_score_}")
+    # print(f'Parameters currently in use:\n{clf.get_params()}')
+    # clf.fit(X_train, y_train)
+    # x = clf.score(X_test, y_test)
+    y_pred_test = grd.predict(X_test)
     fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred_test, pos_label=1)
-    #print(fpr, tpr)
-    #plt.plot(fpr,tpr)
-    #plt.legend(loc=4)
-    #plt.show()
+    plt.plot(fpr,tpr)
+    plt.legend(loc=4)
+    plt.show()
+    """
+    print(fpr, tpr)
+    
+    """
+    return grid_search.best_score_
     # figure out how to visualize/validate
 #does really good on R2 but categorical
 
 #K nearest neighbor regressor
 def KNR(x_col, y_col):
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
-    neigh = KNeighborsRegressor(n_neighbors=2)
+    neigh = KNeighborsRegressor(n_neighbors=5)
     neigh.fit(X_train, y_train)
     score = neigh.score(X_test, y_test)
     return score
 #sucks ASS. literally negative
+
+def KNC(x_col, y_col):
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
+    neigh = KNeighborsClassifier(n_neighbors=10)
+    neigh.fit(X_train, y_train)
+    score = neigh.score(X_test, y_test)
+    return score
 
 #multilayer perceptron regressor
 def neuralnet(x_col, y_col):
@@ -215,12 +262,30 @@ def neuralnet(x_col, y_col):
 #epsilon-support vector regression -- in progress
 def supvec(x_col, y_col):
     X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
-    regr = SVR(kernel='poly', degree = 24)
+    regr = SVC(kernel='poly', degree = 5)
     regr.fit(X_test, y_test)
     #regr.predict(X_test)
     x = regr.score(X_test, y_test)
     return x
 #at least it's positive this time! still max 0.2 though and thats like after overfitting like hell
+
+#ridgeclassifier
+def ridgeclass(x_col, y_col):
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
+    regr = RidgeClassifierCV()
+    regr.fit(X_test, y_test)
+    #regr.predict(X_test)
+    x = regr.score(X_test, y_test)
+    return x
+
+#categorical
+def catnb(x_col, y_col):
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
+    regr = CategoricalNB(force_alpha=True)
+    regr.fit(X_test, y_test)
+    #regr.predict(X_test)
+    x = regr.score(X_test, y_test)
+    return x
 
 #Random forest regressor
 def randforestreg(x_col, y_col):
@@ -231,7 +296,17 @@ def randforestreg(x_col, y_col):
     return x
 #NEGATIVE.....
 
+from sklearn.neural_network import MLPClassifier
+def gradclass(x_col, y_col):
+    X_train, X_test, y_train, y_test = splittrain(x_col, y_col)
+    clf = MLPClassifier(max_iter = 20000, solver = 'lbfgs')
+    clf.fit(X_train, y_train)
+    x = clf.score(X_test, y_test)
+    return x
 
+
+dfmHHS = df_procat('mHHS')
+print(dfmHHS)
 
 
 """
